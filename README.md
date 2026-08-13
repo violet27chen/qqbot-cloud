@@ -35,9 +35,9 @@ npm install
 
 ### 0. 一键部署（推荐新手）
 
-点上面的 **Deploy to Cloudflare Workers** 按钮：Cloudflare 会自动把仓库 fork 到你账号、自动创建 KV 命名空间并改写 `wrangler.toml` 里的 id、构建并部署。整个过程几分钟，无需本地装环境。
+点上面的 **Deploy to Cloudflare Workers** 按钮：Cloudflare 会把仓库 fork 到你账号、自动构建并部署。整个过程几分钟，无需本地装环境。
 
-部署完成后仍需设置 5 个 secret（见第 3 步），按钮本身出于安全考虑不会预填密钥。
+注意：`wrangler.toml` 里已绑定作者账号的 KV 命名空间 id，**作者本人点按钮可直接部署**；第三方想部署自己的实例时，请先把 `wrangler.toml` 里的 KV id 换成你自己 `npx wrangler kv:namespace create "CHAT_HISTORY"` 返回的 id（也可保留占位符后手动填）。部署完成后仍需设置 5 个 secret（见第 3 步），按钮出于安全考虑不会预填密钥。
 
 ### 1. 先建 KV（保存对话上下文）
 
