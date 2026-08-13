@@ -122,12 +122,15 @@ Cloudflare 会自动 Fork 仓库并创建 Worker 项目。
 
 部署完成后，需要手动完成：
 
-1. 创建 KV Namespace
-2. 绑定 KV
-3. 设置 Secrets
-4. 配置 QQ Webhook
+1. 创建 KV Namespace（见方式二第 2 步）
+2. 绑定 KV（见方式二第 2 步）
+3. 设置 Secrets（见方式二第 3 步）
+4. 配置 QQ Webhook（见下文「Webhook 配置」）
 
 > 注意：项目不会包含任何 API Key、QQ 密钥等敏感信息。
+> 一键部署的第一次发布还不包含 KV 绑定，完成上面的「绑定 KV」后，
+> 请回到 **Cloudflare Dashboard → Workers & Pages → qq-chat-worker → 右上角 Redeploy**
+> 重新部署一次，KV 才会生效（务必从 Dashboard 部署，不要跑 wrangler deploy）。
 
 ---
 
@@ -203,19 +206,31 @@ npx wrangler secret put QQ_CLIENT_SECRET
 
 ---
 
-## 4. 部署 Worker
+## 4. 部署 Worker（从 Dashboard 部署，请勿用 wrangler deploy）
 
-执行：
+> ⚠️ 本项目 KV 是在 Cloudflare 控制台手动绑定的（见第 2 步）。
+> 若改用 `npx wrangler deploy` / `npm run deploy`，Wrangler 会按 `wrangler.toml` 为准、
+> 清掉 Dashboard 里绑定的 CHAT_HISTORY，导致运行时 `env.CHAT_HISTORY` 为 undefined。
+> 因此统一从 Dashboard 部署，不要跑 wrangler deploy。
 
-```bash
-npm run deploy
+进入：
+
+```
+Cloudflare Dashboard
+ → Workers & Pages
+ → qq-chat-worker
+ → Deploy（或右上角「重试部署 / Redeploy」）
 ```
 
-或者：
+如果是首次部署，在 Dashboard 里：
 
-```bash
-npx wrangler deploy
-```
+1. 进入 Workers & Pages → 创建 Worker → 名称填 `qq-chat-worker`
+2. 把本仓库 `src/` 下的代码粘贴 / 上传（或接 Git 集成）
+3. 先完成第 2 步（绑定 KV）与第 3 步（设置 Secrets）
+4. 再点 Deploy
+
+> 之后每次改代码，都回到 Dashboard 点 Deploy / Redeploy，
+> 不要在本地执行 `wrangler deploy`，否则 KV 绑定会被清空。
 
 成功后会得到：
 
