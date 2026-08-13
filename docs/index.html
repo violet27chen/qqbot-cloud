@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>qqbot-cloud · 在 QQ 私聊里和大模型聊天</title>
+<meta name="description" content="开源项目 qqbot-cloud：QQ 官方机器人接入大模型，在私聊里直接聊天。完全无服务器，跑在 Cloudflare Workers 上。" />
+<meta property="og:title" content="qqbot-cloud · 在 QQ 私聊里和大模型聊天" />
+<meta property="og:description" content="QQ 官方机器人接入大模型，完全无服务器，不用开电脑、不用买服务器。" />
+<meta property="og:type" content="website" />
+<link rel="preconnect" href="https://unpkg.com" />
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --bg-soft: #11161f;
+    --panel: rgba(255, 255, 255, 0.03);
+    --panel-2: rgba(255, 255, 255, 0.05);
+    --border: rgba(255, 255, 255, 0.09);
+    --text: #e6edf3;
+    --text-dim: #9aa6b8;
+    --text-faint: #66728a;
+    --accent: #22d3ee;
+    --accent-soft: rgba(34, 211, 238, 0.12);
+    --accent-line: rgba(34, 211, 238, 0.28);
+    --accent-ink: #04161c;
+    --radius: 14px;
+    --maxw: 1120px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  .accent { color: var(--accent); }
+
+  /* nav */
+  nav {
+    position: sticky; top: 0; z-index: 30;
+    background: rgba(10, 14, 20, 0.78);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 64px; max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: 0.2px; }
+  .brand i { font-size: 22px; color: var(--accent); }
+  .nav-links { display: flex; gap: 26px; align-items: center; }
+  .nav-links a { color: var(--text-dim); font-size: 14.5px; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-gh {
+    display: inline-flex; align-items: center; gap: 7px; padding: 8px 15px;
+    border: 1px solid var(--accent-line); border-radius: 10px; font-size: 14px; font-weight: 600;
+    color: var(--text); background: var(--accent-soft); transition: border-color 0.2s;
+  }
+  .nav-gh:hover { border-color: var(--accent); }
+  .nav-gh i { font-size: 16px; color: var(--accent); }
+
+  /* hero split */
+  header { padding: 84px 0 72px; }
+  .hero { display: grid; grid-template-columns: 0.95fr 1.1fr; gap: 56px; align-items: center; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-dim);
+    border: 1px solid var(--border); background: var(--panel); padding: 6px 13px; border-radius: 999px; margin-bottom: 24px;
+  }
+  .badge i { font-size: 14px; color: var(--accent); }
+  h1 {
+    font-size: clamp(38px, 5.4vw, 62px); line-height: 1.06; font-weight: 800; letter-spacing: -1.2px;
+  }
+  .hero p.lead { margin-top: 22px; font-size: clamp(16px, 1.9vw, 18.5px); color: var(--text-dim); max-width: 30em; }
+  .hero-cta { margin-top: 34px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px; padding: 13px 24px; border-radius: 11px;
+    font-weight: 650; font-size: 15px; background: var(--accent); color: var(--accent-ink);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -12px rgba(34, 211, 238, 0.6); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-line {
+    display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 11px;
+    font-size: 15px; border: 1px solid var(--border); color: var(--text); background: var(--panel);
+    transition: border-color 0.2s;
+  }
+  .btn-line:hover { border-color: var(--accent-line); }
+  .hero-visual { position: relative; }
+  .hero-visual img {
+    width: 100%; border-radius: 18px; border: 1px solid var(--border);
+    box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.9); display: block;
+  }
+  .hero-visual::after {
+    content: ""; position: absolute; inset: 0; border-radius: 18px; pointer-events: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  .hero-visual .caption { margin-top: 14px; font-size: 13px; color: var(--text-faint); text-align: center; }
+  .zoomable { cursor: zoom-in; }
+  .lightbox {
+    position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center;
+    padding: 40px; background: rgba(4, 7, 12, 0.94); opacity: 0; transition: opacity 0.25s ease;
+  }
+  .lightbox[hidden] { display: none; }
+  .lightbox.open { opacity: 1; }
+  .lightbox img {
+    max-width: 92vw; max-height: 86vh; border-radius: 12px;
+    border: 1px solid var(--accent-line); box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.9);
+  }
+  .lb-close {
+    position: absolute; top: 20px; right: 24px; width: 42px; height: 42px; border-radius: 50%;
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font-size: 20px;
+    cursor: pointer; display: grid; place-items: center; transition: border-color 0.2s;
+  }
+  .lb-close:hover { border-color: var(--accent); }
+  .lb-hint { position: absolute; bottom: 22px; color: var(--text-faint); font-size: 13px; }
+
+  /* sections */
+  section { padding: 76px 0; }
+  .sec-head { margin-bottom: 44px; }
+  .sec-head h2 { font-size: clamp(27px, 3.6vw, 38px); font-weight: 750; letter-spacing: -0.6px; }
+  .sec-head p { color: var(--text-dim); margin-top: 12px; max-width: 34em; }
+
+  /* bento features */
+  .bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+  .cell {
+    background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px; transition: border-color 0.25s, transform 0.25s;
+  }
+  .cell:hover { border-color: var(--accent-line); transform: translateY(-3px); }
+  .cell .ico {
+    width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center;
+    background: var(--accent-soft); border: 1px solid var(--accent-line); margin-bottom: 14px;
+  }
+  .cell .ico i { font-size: 20px; color: var(--accent); }
+  .cell h3 { font-size: 16.5px; margin-bottom: 7px; }
+  .cell p { color: var(--text-dim); font-size: 14.5px; }
+  .c-wide { grid-column: span 4; position: relative; overflow: hidden; border-color: var(--accent-line); }
+  .c-wide::before {
+    content: ""; position: absolute; inset: 0; z-index: 0;
+    background: linear-gradient(120deg, rgba(10,14,20,0.55), rgba(10,14,20,0.82)), url("cloud-abstract.png");
+    background-size: cover; background-position: center;
+  }
+  .c-wide > * { position: relative; z-index: 1; }
+  .c-wide h3 { font-size: 19px; }
+  .c-a { grid-column: span 2; }
+  .c-b { grid-column: span 2; }
+  .c-c { grid-column: span 2; }
+  .c-d { grid-column: span 3; }
+  .c-e { grid-column: span 3; }
+
+  /* flow */
+  .flow { display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; }
+  .step {
+    flex: 1 1 160px; min-width: 150px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 13px; padding: 22px 18px; text-align: center;
+  }
+  .step .n { font-size: 12px; font-weight: 700; color: var(--accent); }
+  .step .t { font-size: 15px; font-weight: 600; margin: 9px 0 6px; }
+  .step .d { font-size: 13px; color: var(--text-dim); }
+  .arrow { display: flex; align-items: center; color: var(--text-faint); font-size: 20px; padding: 0 4px; }
+
+  /* code */
+  .code-wrap { max-width: 780px; background: #0b1018; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .code-bar { display: flex; align-items: center; gap: 7px; padding: 11px 16px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+  .code-bar .c { width: 11px; height: 11px; border-radius: 50%; }
+  .code-bar .r { background: #ff5f57; } .code-bar .y { background: #febc2e; } .code-bar .g { background: #28c840; }
+  .code-bar .name { margin-left: 8px; font-size: 12.5px; color: var(--text-faint); }
+  pre { padding: 22px; overflow-x: auto; font-size: 13.5px; line-height: 1.75; color: #cdd6e8; }
+  pre .c1 { color: #66728a; }
+  pre .k { color: #c792ea; }
+  pre .s { color: #9ece6a; }
+  pre .v { color: #82aaff; }
+
+  /* stack */
+  .stack { display: flex; flex-wrap: wrap; gap: 12px; }
+  .tag { border: 1px solid var(--border); background: var(--panel); padding: 9px 16px; border-radius: 10px; font-size: 14px; color: var(--text-dim); }
+
+  /* cta band */
+  .band {
+    position: relative; overflow: hidden; border: 1px solid var(--accent-line); border-radius: 22px;
+    padding: 60px 28px; text-align: center;
+  }
+  .band::before {
+    content: ""; position: absolute; inset: 0; z-index: 0;
+    background: linear-gradient(120deg, rgba(10,14,20,0.74), rgba(10,14,20,0.9)), url("cloud-abstract.png");
+    background-size: cover; background-position: center;
+  }
+  .band > * { position: relative; z-index: 1; }
+  .band h2 { font-size: clamp(26px, 3.6vw, 36px); }
+  .band p { color: var(--text-dim); margin: 14px auto 28px; max-width: 30em; }
+
+  footer { border-top: 1px solid var(--border); padding: 38px 0; text-align: center; color: var(--text-faint); font-size: 13.5px; }
+  footer a { color: var(--text-dim); }
+  footer a:hover { color: var(--accent); }
+
+  /* reveal */
+  .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; gap: 36px; }
+    .bento { grid-template-columns: 1fr; }
+    .c-wide, .c-a, .c-b, .c-c, .c-d, .c-e { grid-column: 1 / -1; }
+    .nav-links a:not(.nav-gh) { display: none; }
+    .arrow { transform: rotate(90deg); padding: 5px 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .btn-primary { transition: none; }
+    .cell { transition: none; }
+    .lightbox { transition: none; }
+  }
+</style>
+</head>
+<body>
+  <nav>
+    <div class="nav-inner">
+      <div class="brand"><i class="ph ph-chat-circle-dots"></i><span>qqbot-cloud</span></div>
+      <div class="nav-links">
+        <a href="#features">特性</a>
+        <a href="#how">原理</a>
+        <a href="#start">部署</a>
+        <a class="nav-gh" href="https://github.com/violet27chen/qqbot-cloud" target="_blank" rel="noopener"><i class="ph ph-github-logo"></i>GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <header>
+    <div class="wrap">
+      <div class="hero">
+        <div class="reveal">
+          <div class="badge"><i class="ph ph-check-circle"></i>完全无服务器 · 24/7 在线</div>
+          <h1>在 <span class="accent">QQ 私聊</span> 里，<br />直接和大模型聊天</h1>
+          <p class="lead">QQ 官方机器人接入大模型，消息经 Cloudflare Worker 转发到你的大模型 API，再把回复发回私聊。不用开电脑，不用买服务器。</p>
+          <div class="hero-cta">
+            <a class="btn-primary" href="https://github.com/violet27chen/qqbot-cloud" target="_blank" rel="noopener"><i class="ph ph-github-logo"></i>去 GitHub 看看</a>
+            <a class="btn-line" href="#start"><i class="ph ph-rocket-launch"></i>5 分钟部署</a>
+          </div>
+        </div>
+        <div class="hero-visual reveal">
+          <img src="chatatqq.png" alt="QQ 桌面端与小 D 机器人的真实对话截图" loading="eager" class="zoomable" />
+          <div class="caption">真实 QQ 桌面端截图 · 机器人小 D 基于 DeepSeek-V3 回复</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <h2>为什么用它</h2>
+        <p>把大模型装进你的 QQ 私聊，主打省心、省钱、随时能聊。</p>
+      </div>
+      <div class="bento">
+        <div class="cell c-wide reveal">
+          <div class="ico"><i class="ph ph-cloud"></i></div>
+          <h3>彻底无服务器</h3>
+          <p>跑在 Cloudflare Workers 上，不买云主机、不本地常开电脑，零运维零账单焦虑。</p>
+        </div>
+        <div class="cell c-a reveal"><div class="ico"><i class="ph ph-chat-circle"></i></div><h3>QQ 私聊直聊</h3><p>C2C 单聊机器人，只在你和机器人之间对话，干净私密，不进群。</p></div>
+        <div class="cell c-b reveal"><div class="ico"><i class="ph ph-brain"></i></div><h3>任意大模型</h3><p>兼容 OpenAI 协议的 API：DeepSeek、通义、GLM、GPT 随便换，改个变量就行。</p></div>
+        <div class="cell c-c reveal"><div class="ico"><i class="ph ph-lock-key"></i></div><h3>签名安全</h3><p>严格按 QQ 文档实现 Ed25519 签名验证，与官方一致，回调不被伪造。</p></div>
+        <div class="cell c-d reveal"><div class="ico"><i class="ph ph-arrows-clockwise"></i></div><h3>多轮上下文</h3><p>对话历史存 KV，保留最近 10 轮、24 小时过期，机器人记得你刚说了啥。</p></div>
+        <div class="cell c-e reveal"><div class="ico"><i class="ph ph-lightning"></i></div><h3>稳定不丢消息</h3><p>Worker 先秒回 200 再后台跑模型，绕开 QQ 5 秒限制，长回复也不掉。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <h2>一条消息的旅程</h2>
+        <p>从你发出私聊，到收到回复，全程云端自动流转。</p>
+      </div>
+      <div class="flow reveal">
+        <div class="step"><div class="n">01</div><div class="t">你发私聊</div><div class="d">在 QQ 给机器人发消息</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">02</div><div class="t">腾讯 Webhook</div><div class="d">POST 推送到 Worker</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">03</div><div class="t">签名校验</div><div class="d">Ed25519 验真身份</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">04</div><div class="t">调大模型</div><div class="d">OpenAI 兼容 API</div></div>
+        <div class="arrow">→</div>
+        <div class="step"><div class="n">05</div><div class="t">回 QQ</div><div class="d">C2C 接口发回私聊</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="start">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <h2>5 分钟部署</h2>
+        <p>有 Cloudflare 账号加一个 OpenAI 兼容的模型 API 即可。</p>
+      </div>
+      <div class="code-wrap reveal">
+        <div class="code-bar"><span class="c r"></span><span class="c y"></span><span class="c g"></span><span class="name">deploy.sh</span></div>
+        <pre><span class="c1"># 1. 建 KV 保存对话上下文</span>
+<span class="k">npx</span> wrangler kv:namespace create <span class="s">"CHAT_HISTORY"</span>
+
+<span class="c1"># 2. 把返回的 id 填进 wrangler.toml 的 kv_namespaces</span>
+
+<span class="c1"># 3. 部署</span>
+<span class="k">npm</span> install
+<span class="k">npm</span> run deploy
+
+<span class="c1"># 4. 设置 5 个生产密钥</span>
+<span class="k">npx</span> wrangler secret put <span class="v">LLM_BASE_URL</span>
+<span class="k">npx</span> wrangler secret put <span class="v">LLM_API_KEY</span>
+<span class="k">npx</span> wrangler secret put <span class="v">LLM_MODEL</span>
+<span class="k">npx</span> wrangler secret put <span class="v">QQ_APP_ID</span>
+<span class="k">npx</span> wrangler secret put <span class="v">QQ_CLIENT_SECRET</span>
+
+<span class="c1"># 5. QQ 开放平台 → 机器人 → 接入方式 → Webhook</span>
+<span class="c1">#    回调地址填：https://&lt;你的worker&gt;.workers.dev/qq-webhook</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <h2>技术栈</h2>
+      </div>
+      <div class="stack reveal">
+        <span class="tag">Cloudflare Workers</span>
+        <span class="tag">TypeScript</span>
+        <span class="tag">Cloudflare KV</span>
+        <span class="tag">Ed25519 签名</span>
+        <span class="tag">OpenAI 兼容 API</span>
+        <span class="tag">QQ 机器人 C2C</span>
+        <span class="tag">Wrangler</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="band reveal">
+        <h2>想有自己的 AI 私聊搭子？</h2>
+        <p>整套代码已开源，照着 README 自己部署一个，把模型换成你喜欢的就行。</p>
+        <a class="btn-primary" href="https://github.com/violet27chen/qqbot-cloud" target="_blank" rel="noopener"><i class="ph ph-github-logo"></i>拿到源码</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p>qqbot-cloud · 在 QQ 私聊里和大模型聊天</p>
+      <p style="margin-top:8px">MIT License · © 2026 陈海富 · <a href="https://github.com/violet27chen/qqbot-cloud" target="_blank" rel="noopener">GitHub</a></p>
+    </div>
+  </footer>
+
+  <div class="lightbox" id="lightbox" hidden>
+    <button class="lb-close" id="lbClose" aria-label="关闭"><i class="ph ph-x"></i></button>
+    <img id="lbImg" src="" alt="放大查看" />
+    <div class="lb-hint">点击任意处关闭</div>
+  </div>
+
+  <script>
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach((el, i) => {
+      el.style.transitionDelay = (i % 6) * 50 + 'ms';
+      io.observe(el);
+    });
+
+    const lb = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lbImg');
+    const lbClose = document.getElementById('lbClose');
+    function openLb(src, alt) {
+      lbImg.src = src; lbImg.alt = alt || '';
+      lb.hidden = false;
+      requestAnimationFrame(() => lb.classList.add('open'));
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLb() {
+      lb.classList.remove('open');
+      document.body.style.overflow = '';
+      setTimeout(() => { lb.hidden = true; }, 250);
+    }
+    document.querySelectorAll('.zoomable').forEach((img) => {
+      img.addEventListener('click', () => openLb(img.currentSrc || img.src, img.alt));
+    });
+    lb.addEventListener('click', (e) => { if (e.target !== lbImg) closeLb(); });
+    lbClose.addEventListener('click', closeLb);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !lb.hidden) closeLb(); });
+  </script>
+</body>
+</html>

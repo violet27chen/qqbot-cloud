@@ -1,0 +1,10 @@
+# 本地开发用 .dev.vars（wrangler dev 时读取），生产用 wrangler secret put 设置
+
+# 大模型：OpenAI 兼容接口
+LLM_BASE_URL=https://api.deepseek.com/v1
+LLM_API_KEY=sk-xxxxxxxx
+LLM_MODEL=deepseek-chat
+
+# QQ 官方机器人凭据（从 q.qq.com 我的机器人页面复制）
+QQ_APP_ID=你的QQ机器人AppID
+QQ_CLIENT_SECRET=你的QQ机器人AppSecret

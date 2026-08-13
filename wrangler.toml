@@ -1,0 +1,12 @@
+name = "qq-chat-worker"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+# 绑定 KV 用于保存每个 user 的对话上下文
+# 下方 id 是占位符，两种填法：
+#   方式一（推荐）：用 README 顶部的 Deploy to Cloudflare 按钮，会自动创建 KV 并改写此 id
+#   方式二（手动）：npx wrangler kv:namespace create "CHAT_HISTORY"
+#                  把返回的 id 填到下面
+[[kv_namespaces]]
+binding = "CHAT_HISTORY"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
