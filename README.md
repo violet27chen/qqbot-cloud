@@ -33,13 +33,14 @@ npm install
 
 ## 部署：Cloudflare Worker 版
 
-### 0. 一键部署（推荐新手）
+### 0. 一键部署（fork 仓库）
 
-点上面的 **Deploy to Cloudflare** 按钮：Cloudflare 会把仓库 fork 到你的账号、自动创建所需资源（含 KV 命名空间）、构建并部署，全程几分钟，无需本地装环境。
+点上面的 **Deploy to Cloudflare** 按钮可把仓库 fork 到你的账号并构建。注意：
 
-- **作者本人**：`wrangler.toml` 已带有效的 KV id，点按钮即可直接部署。
-- **第三方**：Cloudflare 会自动为你的账号新建 KV 并改写 id；若遇到 KV id 校验失败，请先在自己账号执行 `npx wrangler kv:namespace create "CHAT_HISTORY"`，把返回的 id 填进 `wrangler.toml` 再部署。
-- 部署完成后仍需设置 5 个 secret（见第 3 步），按钮出于安全考虑不会预填密钥。
+- 本仓库的 `wrangler.toml` **不含 KV 绑定**（避免把命名空间 id 提交进仓库）。
+- 部署后请到 Cloudflare 控制台 Workers & Pages → qq-chat-worker → Settings → Bindings，添加 KV Namespace 绑定：Variable name 填 `CHAT_HISTORY`，选择你创建的命名空间，保存后重新部署。
+- 之后请**从 Dashboard 部署 / 重新部署**，不要再用 `wrangler deploy` 覆盖绑定（否则 KV 绑定会被清掉）。
+- 5 个 secret 仍需部署后设置（见第 3 步），按钮出于安全考虑不会预填密钥。
 
 ### 1. 先建 KV（保存对话上下文）
 
@@ -47,13 +48,9 @@ npm install
 npx wrangler kv:namespace create "CHAT_HISTORY"
 ```
 
-把返回的 id 填进 `wrangler.toml`：
-
-```toml
-[[kv_namespaces]]
-binding = "CHAT_HISTORY"
-id = "你刚拿到的id"
-```
+创建后在 Cloudflare 控制台绑定（不在 `wrangler.toml` 里写 id）：
+Workers & Pages → qq-chat-worker → Settings → Bindings → 添加 KV Namespace，
+Variable name 填 `CHAT_HISTORY`，选择刚创建的命名空间，保存。
 
 ### 2. 部署
 

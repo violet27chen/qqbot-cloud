@@ -18,7 +18,7 @@
   "cloudflare": {
     "bindings": {
       "CHAT_HISTORY": {
-        "description": "Cloudflare KV 命名空间，保存每个用户的对话上下文。一键部署时会自动创建，无需手动填。"
+        "description": "Cloudflare KV 命名空间，保存每个用户的对话上下文。请在 Cloudflare 控制台 Bindings 手动绑定（wrangler.toml 不含此绑定以避免暴露 id）。"
       },
       "LLM_BASE_URL": {
         "description": "大模型 OpenAI 兼容 API 的 base_url，例如 https://api.deepseek.com/v1"

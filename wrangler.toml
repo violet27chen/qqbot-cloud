@@ -2,10 +2,7 @@ name = "qq-chat-worker"
 main = "src/index.ts"
 compatibility_date = "2026-01-01"
 
-# 绑定 KV 用于保存每个 user 的对话上下文
-# 下方 id 必须是真实存在的 KV 命名空间 id（Cloudflare 部署按钮不会自动创建，需手动填）：
-#   npx wrangler kv:namespace create "CHAT_HISTORY"
-#   把返回的 id 填到下面（作者本人已填好；第三方部署请换成自己的 id）
-[[kv_namespaces]]
-binding = "CHAT_HISTORY"
-id = "c471f322cd0a4fb5aa7213d40a5e45d3"
+# KV 绑定不写在此处。CHAT_HISTORY 改在 Cloudflare 控制台手动绑定：
+# Workers & Pages → qq-chat-worker → Settings → Bindings 添加 KV Namespace，
+# Variable name 填 CHAT_HISTORY，选择你创建的命名空间。
+# 这样命名空间 id 不会进仓库。部署请用 Dashboard，勿用 wrangler deploy 覆盖绑定。
