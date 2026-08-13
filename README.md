@@ -1,6 +1,6 @@
 # qqbot-cloud
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/violet27chen/qqbot-cloud)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/violet27chen/qqbot-cloud)
 
 QQ 官方机器人接入大模型，在 **QQ 私聊**里和大模型聊天。
 
@@ -35,9 +35,11 @@ npm install
 
 ### 0. 一键部署（推荐新手）
 
-点上面的 **Deploy to Cloudflare Workers** 按钮：Cloudflare 会把仓库 fork 到你账号、自动构建并部署。整个过程几分钟，无需本地装环境。
+点上面的 **Deploy to Cloudflare** 按钮：Cloudflare 会把仓库 fork 到你的账号、自动创建所需资源（含 KV 命名空间）、构建并部署，全程几分钟，无需本地装环境。
 
-注意：`wrangler.toml` 里已绑定作者账号的 KV 命名空间 id，**作者本人点按钮可直接部署**；第三方想部署自己的实例时，请先把 `wrangler.toml` 里的 KV id 换成你自己 `npx wrangler kv:namespace create "CHAT_HISTORY"` 返回的 id（也可保留占位符后手动填）。部署完成后仍需设置 5 个 secret（见第 3 步），按钮出于安全考虑不会预填密钥。
+- **作者本人**：`wrangler.toml` 已带有效的 KV id，点按钮即可直接部署。
+- **第三方**：Cloudflare 会自动为你的账号新建 KV 并改写 id；若遇到 KV id 校验失败，请先在自己账号执行 `npx wrangler kv:namespace create "CHAT_HISTORY"`，把返回的 id 填进 `wrangler.toml` 再部署。
+- 部署完成后仍需设置 5 个 secret（见第 3 步），按钮出于安全考虑不会预填密钥。
 
 ### 1. 先建 KV（保存对话上下文）
 

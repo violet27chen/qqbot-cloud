@@ -14,5 +14,27 @@
     "@cloudflare/workers-types": "^4.20240806.0",
     "typescript": "^5.9.3",
     "wrangler": "^3.114.0"
+  },
+  "cloudflare": {
+    "bindings": {
+      "CHAT_HISTORY": {
+        "description": "Cloudflare KV 命名空间，保存每个用户的对话上下文。一键部署时会自动创建，无需手动填。"
+      },
+      "LLM_BASE_URL": {
+        "description": "大模型 OpenAI 兼容 API 的 base_url，例如 https://api.deepseek.com/v1"
+      },
+      "LLM_API_KEY": {
+        "description": "大模型 API key（DeepSeek / 通义 / GLM 等）"
+      },
+      "LLM_MODEL": {
+        "description": "模型名，例如 deepseek-chat / deepseek-v3 / qwen-max"
+      },
+      "QQ_APP_ID": {
+        "description": "QQ 开放平台机器人 AppID（q.qq.com 我的机器人页面获取）"
+      },
+      "QQ_CLIENT_SECRET": {
+        "description": "QQ 开放平台机器人 AppSecret（q.qq.com 获取，用于 Ed25519 签名校验）"
+      }
+    }
   }
 }
